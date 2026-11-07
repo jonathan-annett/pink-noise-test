@@ -290,20 +290,39 @@ footer{text-align:center;font-size:12px;color:var(--muted);margin-top:20px}
     setStatus(state.playing ? '' : 'Track ready. Tap to play.');
   }
 
-  async function tryLoadDefaultMusic(){
-    if (music.buf || music.loading) return;
+  // Returns a promise that resolves once the default track is decoded (or fails).
+  // Repeat calls share the same in-flight load.
+  let musicLoad = null;
+  function loadDefaultMusic(){
+    if (music.buf) return Promise.resolve(true);
+    if (musicLoad) return musicLoad;
     music.loading = true;
-    $('musicInfo').textContent = 'Looking for the default track…';
-    try {
-      const r = await fetch(MUSIC_URL);
-      if (!r.ok) throw 0;
-      await decodeMusic(await r.arrayBuffer(), MUSIC_URL);
-      if (state.playing && state.mode === 'music') switchSource();
-    } catch(e){
-      music.loading = false;
-      $('musicInfo').textContent = 'No default track found. Choose a file from this device.';
-      if (state.mode === 'music') setStatus('Choose a music file to play.');
-    }
+    $('musicInfo').textContent = 'Loading the test track…';
+    setStatus('Loading music track…');
+    musicLoad = (async () => {
+      try {
+        const r = await fetch(MUSIC_URL);
+        if (!r.ok) throw 0;
+        await decodeMusic(await r.arrayBuffer(), MUSIC_URL);
+        return true;
+      } catch(e){
+        music.loading = false;
+        $('musicInfo').textContent = 'No default track found. Choose a file from this device.';
+        if (state.mode === 'music') setStatus('Choose a music file to play.');
+        return false;
+      } finally {
+        musicLoad = null;
+      }
+    })();
+    return musicLoad;
+  }
+
+  // Make sure the music buffer exists before starting it. Returns false if
+  // it couldn't be loaded or the user moved to another mode meanwhile.
+  async function ensureMusic(){
+    if (music.buf) return true;
+    const ok = await loadDefaultMusic();
+    return ok && state.mode === 'music';
   }
 
   // ---------- Playback ----------
@@ -336,9 +355,8 @@ footer{text-align:center;font-size:12px;color:var(--muted);margin-top:20px}
     initAudio();
     if (ctx.state !== 'running') await ctx.resume();
     if (state.mode === 'music' && !music.buf){
-      setStatus('Choose a music file to play.');
-      tryLoadDefaultMusic();
-      return;
+      if (!(await ensureMusic())) return;
+      if (state.playing) return;           // a second tap already started it
     }
     current = startSource();
     if (!current) return;
@@ -358,16 +376,26 @@ footer{text-align:center;font-size:12px;color:var(--muted);margin-top:20px}
     render();
   }
 
-  function switchSource(){
+  async function switchSource(){
     if (!state.playing) return;
-    if (state.mode === 'music' && !music.buf){ stop(); setStatus('Choose a music file to play.'); return; }
     const old = current, t = ctx.currentTime;
     rampLevel(0, 0.03);
     stopSource(old, t + 0.035);
-    setTimeout(() => {
-      current = startSource();
-      rampLevel(db2g(state.level - REF_DB), 0.04);
-    }, 40);
+    current = null;
+    if (state.mode === 'music' && !music.buf){
+      const ok = await ensureMusic();
+      if (!state.playing) return;
+      if (!ok){
+        if (state.mode === 'music'){ state.playing = false; releaseWake(); render(); setStatus('Choose a music file to play.'); }
+        return;
+      }
+    } else {
+      await new Promise(r => setTimeout(r, 40));
+    }
+    if (!state.playing || current) return;
+    current = startSource();
+    rampLevel(db2g(state.level - REF_DB), 0.04);
+    render();
   }
 
   function applyChannels(instant){
@@ -457,7 +485,7 @@ footer{text-align:center;font-size:12px;color:var(--muted);margin-top:20px}
   $('modes').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b || b.dataset.mode === state.mode) return;
     state.mode = b.dataset.mode;
-    if (state.mode === 'music') tryLoadDefaultMusic();
+    if (state.mode === 'music') loadDefaultMusic();
     else if (ctx) getBuffer(state.mode);
     switchSource();
     render();
