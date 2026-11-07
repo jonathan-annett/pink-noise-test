@@ -1,0 +1,499 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pink Noise Test</title>
+<meta name="description" content="Free online pink noise, white noise, 1 kHz tone and music test signal generator for checking audio lines, cables, speakers and headphones.">
+<meta name="theme-color" content="#121016">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23ff4f9a'/%3E%3Cpath d='M6 16h3l2-6 3 12 3-9 2 5 2-2h5' fill='none' stroke='%23fff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#f6f3f6; --card:#ffffff; --ink:#1b1720; --muted:#6d6474; --line:#e6dfe8;
+  --accent:#e8317f; --accent-ink:#ffffff; --accent-soft:#fde4ef;
+  --ok:#2fb36b; --warn:#e5a100; --bad:#e23c3c; --track:#ece6ee;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#121016; --card:#1c1922; --ink:#f3eef6; --muted:#9c93a4; --line:#2c2733;
+    --accent:#ff4f9a; --accent-ink:#ffffff; --accent-soft:#3a1d2c; --track:#2a2530;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:var(--bg); color:var(--ink);
+  font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  -webkit-tap-highlight-color:transparent;
+  padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+}
+.wrap{max-width:520px;margin:0 auto;padding:16px 16px 40px}
+header{display:flex;align-items:center;gap:10px;margin:4px 0 18px}
+.logo{width:30px;height:30px;flex:none}
+header h1{font-size:19px;margin:0;letter-spacing:-.01em}
+header h1 span{color:var(--accent)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:14px}
+.label{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 10px}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;background:var(--track);padding:4px;border-radius:12px}
+.seg button{
+  appearance:none;border:0;background:transparent;color:var(--ink);font:inherit;font-weight:600;font-size:15px;
+  padding:11px 4px;border-radius:9px;cursor:pointer;min-height:44px
+}
+.seg button[aria-pressed="true"]{background:var(--card);color:var(--accent);box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.play-area{display:flex;flex-direction:column;align-items:center;padding:22px 0 8px}
+#play{
+  width:148px;height:148px;border-radius:50%;border:0;cursor:pointer;
+  background:var(--accent);color:var(--accent-ink);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  box-shadow:0 10px 30px -8px color-mix(in srgb,var(--accent) 70%,transparent);
+  transition:transform .12s ease;font:inherit
+}
+#play:active{transform:scale(.96)}
+#play svg{width:46px;height:46px}
+#play .pl{font-size:13px;font-weight:600;opacity:.9}
+#play.on{animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 14px color-mix(in srgb,var(--accent) 18%,transparent)}}
+.status{margin-top:14px;font-size:14px;color:var(--muted);text-align:center;min-height:20px}
+.level-read{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px}
+.level-read b{font-size:34px;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.level-read small{color:var(--muted);font-size:13px}
+.step{display:flex;gap:6px}
+.step button{width:44px;height:40px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-size:18px;cursor:pointer}
+input[type=range]{width:100%;accent-color:var(--accent);height:32px;margin:4px 0 8px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{
+  border:1px solid var(--line);background:transparent;color:var(--ink);font:inherit;font-size:14px;font-weight:600;
+  padding:8px 12px;border-radius:999px;cursor:pointer;min-height:38px;font-variant-numeric:tabular-nums
+}
+.chips button[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.peak{font-size:13px;color:var(--muted);margin-top:10px}
+.peak.clip{color:var(--bad);font-weight:600}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px}
+.toggle{display:flex;align-items:center;gap:10px;font-size:15px;cursor:pointer;user-select:none}
+.toggle input{width:20px;height:20px;accent-color:var(--accent)}
+.meter{display:grid;grid-template-columns:18px 1fr 64px;align-items:center;gap:8px;margin:8px 0;font-size:13px;font-variant-numeric:tabular-nums}
+.meter .bar{position:relative;height:14px;background:var(--track);border-radius:7px;overflow:hidden}
+.meter .fill{position:absolute;inset:0 auto 0 0;width:0;border-radius:7px;background:linear-gradient(90deg,var(--ok) 0 70%,var(--warn) 85%,var(--bad) 100%);background-size:var(--w,100%) 100%}
+.meter .pk{position:absolute;top:0;bottom:0;width:2px;background:var(--ink);opacity:.7;left:0}
+.meter .v{text-align:right;color:var(--muted)}
+.scale{display:grid;grid-template-columns:18px 1fr 64px;gap:8px;font-size:11px;color:var(--muted)}
+.scale div{display:flex;justify-content:space-between}
+#musicCard{display:none}
+#musicCard.show{display:block}
+.file-btn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--accent);color:var(--accent);border-radius:10px;padding:9px 14px;font-weight:600;cursor:pointer;font-size:15px}
+.file-btn input{display:none}
+#musicInfo{font-size:14px;color:var(--muted);margin:0 0 12px;word-break:break-word}
+.note{font-size:14px;color:var(--muted)}
+.note p{margin:0 0 8px}
+.note b{color:var(--ink)}
+.warn{border-color:color-mix(in srgb,var(--warn) 50%,var(--line))}
+footer{text-align:center;font-size:12px;color:var(--muted);margin-top:20px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="14" fill="var(--accent)"/><path d="M6 16h3l2-6 3 12 3-9 2 5 2-2h5" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <h1>pink<span>noise</span>test</h1>
+  </header>
+
+  <section class="card">
+    <p class="label">Signal</p>
+    <div class="seg" id="modes" role="group" aria-label="Signal type">
+      <button data-mode="pink" aria-pressed="true">Pink</button>
+      <button data-mode="white" aria-pressed="false">White</button>
+      <button data-mode="tone" aria-pressed="false">1 kHz</button>
+      <button data-mode="music" aria-pressed="false">Music</button>
+    </div>
+    <div class="play-area">
+      <button id="play" aria-label="Play">
+        <svg viewBox="0 0 24 24" id="playIcon"><path fill="currentColor" d="M8 5.5v13l11-6.5z"/></svg>
+        <span class="pl" id="playLabel">Pink · −20</span>
+      </button>
+      <div class="status" id="status">Tap to start. Turn your device volume down first.</div>
+    </div>
+  </section>
+
+  <section class="card" id="musicCard">
+    <p class="label">Music file</p>
+    <p id="musicInfo">No track loaded.</p>
+    <label class="file-btn">
+      <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3z"/></svg>
+      Choose audio file
+      <input type="file" id="musicFile" accept="audio/*,.mp3,.m4a,.wav,.flac">
+    </label>
+  </section>
+
+  <section class="card">
+    <p class="label">Level</p>
+    <div class="level-read">
+      <div><b id="levelVal">−20</b> <small>dBFS RMS</small></div>
+      <div class="step">
+        <button id="down" aria-label="Down 1 dB">−</button>
+        <button id="up" aria-label="Up 1 dB">+</button>
+      </div>
+    </div>
+    <input type="range" id="level" min="-60" max="0" step="1" value="-20" aria-label="Level in dBFS">
+    <div class="chips" id="presets">
+      <button data-l="-40">−40</button>
+      <button data-l="-30">−30</button>
+      <button data-l="-20" aria-pressed="true">−20</button>
+      <button data-l="-18">−18</button>
+      <button data-l="-12">−12</button>
+      <button data-l="-6">−6</button>
+    </div>
+    <div class="peak" id="peak">Peaks ≈ −8 dBFS</div>
+  </section>
+
+  <section class="card">
+    <p class="label">Output</p>
+    <div class="seg" id="chans" role="group" aria-label="Channels">
+      <button data-ch="L" aria-pressed="false">Left</button>
+      <button data-ch="both" aria-pressed="true">Both</button>
+      <button data-ch="R" aria-pressed="false">Right</button>
+    </div>
+    <div class="row">
+      <label class="toggle"><input type="checkbox" id="invert"> Invert right polarity</label>
+    </div>
+    <div style="margin-top:14px">
+      <div class="meter"><span>L</span><div class="bar"><div class="fill" id="fL"></div><div class="pk" id="pL"></div></div><span class="v" id="vL">—</span></div>
+      <div class="meter"><span>R</span><div class="bar"><div class="fill" id="fR"></div><div class="pk" id="pR"></div></div><span class="v" id="vR">—</span></div>
+      <div class="scale"><span></span><div><span>−60</span><span>−40</span><span>−20</span><span>0</span></div><span></span></div>
+    </div>
+  </section>
+
+  <section class="card note warn">
+    <p><b>Protect your ears and gear.</b> Start low and raise slowly. Pink and white noise are fatiguing — never test at loud levels on headphones you're wearing.</p>
+    <p>Levels are relative to your device's digital full scale. For line-level testing, set the device's own volume to a known position (often maximum) and leave it there.</p>
+  </section>
+
+  <section class="card note">
+    <p class="label">Which signal?</p>
+    <p><b>Pink noise</b> — equal energy per octave, sounds balanced to the ear. Best for speaker placement, room checks and SPL calibration.</p>
+    <p><b>White noise</b> — equal energy per Hz, very bright. Good for spotting crackles, dropouts and hiss in cables.</p>
+    <p><b>1 kHz tone</b> — steady sine for setting gain structure, checking meters and line levels.</p>
+    <p><b>Music</b> — a real-world check, loudness-matched to the selected level.</p>
+    <p><b>Invert right</b> — with Both selected on two speakers, the centre image should collapse and bass thin out. If it gets <i>fuller</i>, one speaker is wired out of phase.</p>
+  </section>
+
+  <footer>Runs entirely in your browser. Nothing is uploaded.</footer>
+</div>
+
+<script>
+(() => {
+  const REF_DB = -20;                 // all buffers are rendered at this RMS
+  const MUSIC_URL = 'music.mp3';      // place your track next to this file
+  const MODE_NAMES = {pink:'Pink', white:'White', tone:'1 kHz', music:'Music'};
+
+  const $ = id => document.getElementById(id);
+  const db2g = d => Math.pow(10, d / 20);
+  const g2db = g => 20 * Math.log10(Math.max(g, 1e-9));
+  const fmt = d => (d < 0 ? '−' : d > 0 ? '+' : '') + Math.abs(Math.round(d));
+
+  const state = { mode:'pink', level:REF_DB, ch:'both', invert:false, playing:false };
+  let ctx, gL, gR, levelGain, anL, anR, current = null, wakeLock = null;
+  const buffers = {}, crest = {};         // crest = peak dB above RMS for each buffer
+  let music = { buf:null, norm:1, crest:0, name:'', loading:false };
+
+  // ---------- Audio setup ----------
+  function initAudio(){
+    if (ctx) return;
+    try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch(e){}
+    ctx = new (window.AudioContext || window.webkitAudioContext)({ latencyHint:'playback' });
+    const split = ctx.createChannelSplitter(2);
+    const merge = ctx.createChannelMerger(2);
+    gL = ctx.createGain(); gR = ctx.createGain();
+    levelGain = ctx.createGain(); levelGain.gain.value = 0;
+    split.connect(gL, 0); split.connect(gR, 1);
+    gL.connect(merge, 0, 0); gR.connect(merge, 0, 1);
+    merge.connect(levelGain);
+    levelGain.connect(ctx.destination);
+    const mSplit = ctx.createChannelSplitter(2);
+    levelGain.connect(mSplit);
+    anL = ctx.createAnalyser(); anR = ctx.createAnalyser();
+    anL.fftSize = anR.fftSize = 2048;
+    mSplit.connect(anL, 0); mSplit.connect(anR, 1);
+    ctx._in = split;
+    applyChannels(true);
+    requestAnimationFrame(meterLoop);
+  }
+
+  function finishBuffer(data){
+    // normalise to REF RMS, measure crest, return stereo AudioBuffer (identical L/R)
+    let s = 0, pk = 0;
+    for (let i = 0; i < data.length; i++){ s += data[i]*data[i]; }
+    const k = db2g(REF_DB) / Math.sqrt(s / data.length);
+    for (let i = 0; i < data.length; i++){ data[i] *= k; const a = Math.abs(data[i]); if (a > pk) pk = a; }
+    const b = ctx.createBuffer(2, data.length, ctx.sampleRate);
+    b.copyToChannel(data, 0); b.copyToChannel(data, 1);
+    return { buf:b, crest:g2db(pk) - REF_DB };
+  }
+
+  function makeNoise(type){
+    const sr = ctx.sampleRate, n = sr * 12, m = Math.floor(sr * 0.25);
+    const d = new Float32Array(n);
+    let b0=0,b1=0,b2=0,b3=0,b4=0,b5=0,b6=0;
+    for (let i = -sr; i < n; i++){              // 1 s warm-up for the filter
+      const w = Math.random() * 2 - 1, v = w;
+      let out = w;
+      if (type === 'pink'){
+        b0 = 0.99886*b0 + w*0.0555179; b1 = 0.99332*b1 + w*0.0750759;
+        b2 = 0.96900*b2 + w*0.1538520; b3 = 0.86650*b3 + w*0.3104856;
+        b4 = 0.55000*b4 + w*0.5329522; b5 = -0.7616*b5 - w*0.0168980;
+        out = b0+b1+b2+b3+b4+b5+b6 + w*0.5362; b6 = w*0.115926;
+      }
+      if (i >= 0) d[i] = out;
+    }
+    // seamless loop: crossfade the tail into the head
+    const out = new Float32Array(n - m);
+    for (let i = 0; i < n - 2*m; i++) out[i] = d[i + m];
+    for (let j = 0; j < m; j++){
+      const t = j / m;
+      out[n - 2*m + j] = d[n - m + j] * Math.cos(t*Math.PI/2) + d[j] * Math.sin(t*Math.PI/2);
+    }
+    return finishBuffer(out);
+  }
+
+  function makeTone(freq){
+    const sr = ctx.sampleRate, n = sr;          // 1 s holds an exact number of cycles
+    const d = new Float32Array(n);
+    for (let i = 0; i < n; i++) d[i] = Math.sin(2*Math.PI*freq*i/sr);
+    return finishBuffer(d);
+  }
+
+  function getBuffer(mode){
+    if (mode === 'music') return music.buf;
+    if (!buffers[mode]){
+      const r = mode === 'tone' ? makeTone(1000) : makeNoise(mode);
+      buffers[mode] = r.buf; crest[mode] = r.crest;
+    }
+    return buffers[mode];
+  }
+
+  async function decodeMusic(arrayBuf, name){
+    initAudio();
+    setStatus('Decoding ' + name + '…');
+    const buf = await new Promise((res, rej) => {
+      const p = ctx.decodeAudioData(arrayBuf, res, rej);
+      if (p && p.then) p.then(res, rej);
+    });
+    let s = 0, pk = 0, count = 0;
+    for (let c = 0; c < buf.numberOfChannels; c++){
+      const d = buf.getChannelData(c);
+      for (let i = 0; i < d.length; i++){ s += d[i]*d[i]; const a = Math.abs(d[i]); if (a > pk) pk = a; }
+      count += d.length;
+    }
+    const rms = Math.sqrt(s / count) || 1e-6;
+    music = { buf, norm: db2g(REF_DB) / rms, crest: g2db(pk) - g2db(rms), name, loading:false };
+    $('musicInfo').textContent = `${name} · ${Math.round(buf.duration)} s · loudness-matched`;
+    updatePeak();
+    setStatus(state.playing ? '' : 'Track ready. Tap to play.');
+  }
+
+  async function tryLoadDefaultMusic(){
+    if (music.buf || music.loading) return;
+    music.loading = true;
+    $('musicInfo').textContent = 'Looking for the default track…';
+    try {
+      const r = await fetch(MUSIC_URL);
+      if (!r.ok) throw 0;
+      await decodeMusic(await r.arrayBuffer(), MUSIC_URL);
+      if (state.playing && state.mode === 'music') switchSource();
+    } catch(e){
+      music.loading = false;
+      $('musicInfo').textContent = 'No default track found. Choose a file from this device.';
+      if (state.mode === 'music') setStatus('Choose a music file to play.');
+    }
+  }
+
+  // ---------- Playback ----------
+  function startSource(){
+    const buf = getBuffer(state.mode);
+    if (!buf) return null;
+    const src = ctx.createBufferSource();
+    const g = ctx.createGain();
+    src.buffer = buf; src.loop = true;
+    g.gain.value = state.mode === 'music' ? music.norm : 1;
+    src.connect(g); g.connect(ctx._in);
+    src.start();
+    return { src, g };
+  }
+
+  function stopSource(s, when){
+    if (!s) return;
+    try { s.src.stop(when); } catch(e){}
+    setTimeout(() => { try { s.g.disconnect(); } catch(e){} }, 300);
+  }
+
+  function rampLevel(target, time = 0.04){
+    const t = ctx.currentTime;
+    levelGain.gain.cancelScheduledValues(t);
+    levelGain.gain.setValueAtTime(levelGain.gain.value, t);
+    levelGain.gain.linearRampToValueAtTime(target, t + time);
+  }
+
+  async function play(){
+    initAudio();
+    if (ctx.state !== 'running') await ctx.resume();
+    if (state.mode === 'music' && !music.buf){
+      setStatus('Choose a music file to play.');
+      tryLoadDefaultMusic();
+      return;
+    }
+    current = startSource();
+    if (!current) return;
+    state.playing = true;
+    rampLevel(db2g(state.level - REF_DB), 0.05);
+    requestWake();
+    render();
+  }
+
+  function stop(){
+    if (!ctx) return;
+    rampLevel(0, 0.05);
+    stopSource(current, ctx.currentTime + 0.06);
+    current = null;
+    state.playing = false;
+    releaseWake();
+    render();
+  }
+
+  function switchSource(){
+    if (!state.playing) return;
+    if (state.mode === 'music' && !music.buf){ stop(); setStatus('Choose a music file to play.'); return; }
+    const old = current, t = ctx.currentTime;
+    rampLevel(0, 0.03);
+    stopSource(old, t + 0.035);
+    setTimeout(() => {
+      current = startSource();
+      rampLevel(db2g(state.level - REF_DB), 0.04);
+    }, 40);
+  }
+
+  function applyChannels(instant){
+    if (!ctx) return;
+    const l = state.ch === 'R' ? 0 : 1;
+    const r = (state.ch === 'L' ? 0 : 1) * (state.invert ? -1 : 1);
+    const t = ctx.currentTime, tc = instant ? 0.001 : 0.015;
+    gL.gain.setTargetAtTime(l, t, tc);
+    gR.gain.setTargetAtTime(r, t, tc);
+  }
+
+  function setLevel(v){
+    state.level = Math.max(-60, Math.min(0, Math.round(v)));
+    if (ctx && state.playing) rampLevel(db2g(state.level - REF_DB), 0.03);
+    render();
+  }
+
+  // ---------- Wake lock ----------
+  async function requestWake(){
+    try { if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); } catch(e){}
+  }
+  function releaseWake(){ try { wakeLock && wakeLock.release(); } catch(e){} wakeLock = null; }
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && state.playing) requestWake();
+  });
+
+  // ---------- Meters ----------
+  const tmp = new Float32Array(2048);
+  const hold = { L:{pk:-90,t:0}, R:{pk:-90,t:0} };
+  const pos = d => Math.max(0, Math.min(100, (d + 60) / 60 * 100));
+  function readMeter(an, key){
+    an.getFloatTimeDomainData(tmp);
+    let s = 0, pk = 0;
+    for (let i = 0; i < tmp.length; i++){ s += tmp[i]*tmp[i]; const a = Math.abs(tmp[i]); if (a > pk) pk = a; }
+    const rms = g2db(Math.sqrt(s / tmp.length)), p = g2db(pk), h = hold[key], now = performance.now();
+    if (p > h.pk || now - h.t > 1200){ h.pk = p; h.t = now; }
+    $('f'+key).style.width = pos(rms) + '%';
+    $('f'+key).style.setProperty('--w', (100 / Math.max(pos(rms), 1) * 100) + '%');
+    $('p'+key).style.left = `calc(${pos(h.pk)}% - 1px)`;
+    $('v'+key).textContent = rms < -80 ? '—' : rms.toFixed(1);
+    $('v'+key).style.color = h.pk > -0.1 ? 'var(--bad)' : '';
+  }
+  function meterLoop(){
+    readMeter(anL, 'L'); readMeter(anR, 'R');
+    requestAnimationFrame(meterLoop);
+  }
+
+  // ---------- UI ----------
+  function setStatus(t){ $('status').textContent = t; }
+
+  function updatePeak(){
+    const c = state.mode === 'music' ? (music.buf ? music.crest : null)
+            : (crest[state.mode] ?? ({pink:12, white:12.5, tone:3.01})[state.mode]);
+    const el = $('peak');
+    if (c == null){ el.textContent = 'Peaks depend on the track.'; el.className = 'peak'; return; }
+    const p = state.level + c;
+    el.textContent = p > -0.1
+      ? `Peaks ≈ ${fmt(p)} dBFS — will clip. Lower the level for a clean signal.`
+      : `Peaks ≈ ${fmt(p)} dBFS`;
+    el.className = 'peak' + (p > -0.1 ? ' clip' : '');
+  }
+
+  function render(){
+    document.querySelectorAll('#modes button').forEach(b => b.setAttribute('aria-pressed', b.dataset.mode === state.mode));
+    document.querySelectorAll('#chans button').forEach(b => b.setAttribute('aria-pressed', b.dataset.ch === state.ch));
+    document.querySelectorAll('#presets button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.l === state.level));
+    $('levelVal').textContent = fmt(state.level);
+    $('level').value = state.level;
+    $('musicCard').classList.toggle('show', state.mode === 'music');
+    $('playLabel').textContent = `${MODE_NAMES[state.mode]} · ${fmt(state.level)}`;
+    $('play').classList.toggle('on', state.playing);
+    $('play').setAttribute('aria-label', state.playing ? 'Stop' : 'Play');
+    $('playIcon').innerHTML = state.playing
+      ? '<rect x="6.5" y="6.5" width="11" height="11" rx="1.5" fill="currentColor"/>'
+      : '<path fill="currentColor" d="M8 5.5v13l11-6.5z"/>';
+    if (state.playing){
+      const ch = state.ch === 'both' ? 'both channels' : (state.ch === 'L' ? 'left only' : 'right only');
+      setStatus(`Playing on ${ch}${state.invert && state.ch !== 'L' ? ', right inverted' : ''}.`);
+    } else if (!$('status').textContent || $('status').textContent.startsWith('Playing')){
+      setStatus('Stopped.');
+    }
+    updatePeak();
+  }
+
+  $('play').addEventListener('click', () => state.playing ? stop() : play());
+
+  $('modes').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b || b.dataset.mode === state.mode) return;
+    state.mode = b.dataset.mode;
+    if (state.mode === 'music') tryLoadDefaultMusic();
+    else if (ctx) getBuffer(state.mode);
+    switchSource();
+    render();
+  });
+
+  $('chans').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    state.ch = b.dataset.ch; applyChannels(); render();
+  });
+
+  $('invert').addEventListener('change', e => { state.invert = e.target.checked; applyChannels(); render(); });
+  $('level').addEventListener('input', e => setLevel(+e.target.value));
+  $('presets').addEventListener('click', e => { const b = e.target.closest('button'); if (b) setLevel(+b.dataset.l); });
+  $('up').addEventListener('click', () => setLevel(state.level + 1));
+  $('down').addEventListener('click', () => setLevel(state.level - 1));
+
+  $('musicFile').addEventListener('change', async e => {
+    const f = e.target.files[0]; if (!f) return;
+    try {
+      await decodeMusic(await f.arrayBuffer(), f.name);
+      if (state.playing && state.mode === 'music') switchSource();
+    } catch(err){
+      $('musicInfo').textContent = 'Could not decode that file. Try an MP3 or WAV.';
+    }
+  });
+
+  document.addEventListener('keydown', e => {
+    if (e.target.tagName === 'INPUT' && e.target.type !== 'range' && e.target.type !== 'checkbox') return;
+    if (e.code === 'Space'){ e.preventDefault(); state.playing ? stop() : play(); }
+    if (e.key === 'ArrowUp'){ e.preventDefault(); setLevel(state.level + 1); }
+    if (e.key === 'ArrowDown'){ e.preventDefault(); setLevel(state.level - 1); }
+  });
+
+  render();
+  setStatus('Tap to start. Turn your device volume down first.');
+})();
+</script>
+</body>
+</html>
