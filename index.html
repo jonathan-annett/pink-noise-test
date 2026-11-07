@@ -6,7 +6,13 @@
 <title>Pink Noise Test</title>
 <meta name="description" content="Free online pink noise, white noise, 1 kHz tone and music test signal generator for checking audio lines, cables, speakers and headphones.">
 <meta name="theme-color" content="#121016">
+<link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23ff4f9a'/%3E%3Cpath d='M6 16h3l2-6 3 12 3-9 2 5 2-2h5' fill='none' stroke='%23fff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Pink Noise">
 <style>
 :root{
   --bg:#f6f3f6; --card:#ffffff; --ink:#1b1720; --muted:#6d6474; --line:#e6dfe8;
@@ -88,6 +94,10 @@ input[type=range]{width:100%;accent-color:var(--accent);height:32px;margin:4px 0
 .note b{color:var(--ink)}
 .warn{border-color:color-mix(in srgb,var(--warn) 50%,var(--line))}
 footer{text-align:center;font-size:12px;color:var(--muted);margin-top:20px}
+#install{margin-left:auto;display:none;border:1px solid var(--accent);background:transparent;color:var(--accent);font:inherit;font-size:14px;font-weight:600;padding:6px 12px;border-radius:999px;cursor:pointer}
+#install.show{display:inline-flex}
+#iosHint{display:none;font-size:13px;color:var(--muted);margin:-8px 0 14px}
+#iosHint.show{display:block}
 </style>
 </head>
 <body>
@@ -95,7 +105,9 @@ footer{text-align:center;font-size:12px;color:var(--muted);margin-top:20px}
   <header>
     <svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="14" fill="var(--accent)"/><path d="M6 16h3l2-6 3 12 3-9 2 5 2-2h5" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
     <h1>pink<span>noise</span>test</h1>
+    <button id="install" aria-label="Install app">Install app</button>
   </header>
+  <p id="iosHint">To install: tap the Share button, then “Add to Home Screen”.</p>
 
   <section class="card">
     <p class="label">Signal</p>
@@ -521,6 +533,38 @@ footer{text-align:center;font-size:12px;color:var(--muted);margin-top:20px}
 
   render();
   setStatus('Tap to start. Turn your device volume down first.');
+
+  // ---------- PWA ----------
+  const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  if ('serviceWorker' in navigator && location.protocol !== 'file:'){
+    navigator.serviceWorker.register('/sw.js').then(async () => {
+      // Installed app: cache the music track too so every mode works offline
+      if (standalone){
+        const reg = await navigator.serviceWorker.ready;
+        reg.active && reg.active.postMessage('cache-music');
+      }
+    }).catch(() => {});
+  }
+
+  let installEvt = null;
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault(); installEvt = e;
+    $('install').classList.add('show');
+  });
+  $('install').addEventListener('click', async () => {
+    if (installEvt){
+      installEvt.prompt();
+      await installEvt.userChoice.catch(() => {});
+      installEvt = null;
+      $('install').classList.remove('show');
+    } else {
+      $('iosHint').classList.toggle('show');
+    }
+  });
+  window.addEventListener('appinstalled', () => $('install').classList.remove('show'));
+  // iOS Safari has no install prompt — offer instructions instead
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  if (isIOS && !standalone) $('install').classList.add('show');
 })();
 </script>
 </body>
