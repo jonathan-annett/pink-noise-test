@@ -1,43 +1,30 @@
-# pinknoisetest
+# Pink Noise Test
 
-A static, mobile-friendly test signal generator: pink noise, white noise, 1 kHz tone and a music track, with level presets (dBFS RMS), L/R/Both routing, right-channel polarity invert and live meters. Everything runs in the browser via the Web Audio API — no build step, no server code.
+Test signals for checking audio lines, cables, speakers and headphones, straight from your phone or computer.
 
-## Files
+**Use it:** https://pinknoisetest.com/
 
-| File | Purpose |
-|---|---|
-| `index.html` | The whole app |
-| `music.mp3` | Your music test track (add this yourself) |
-| `_headers` | Cloudflare response headers |
-| `manifest.webmanifest`, `sw.js`, `icons/` | Installable PWA + offline support |
+- Choose **pink noise**, **white noise**, a **1 kHz tone** or a **music** track, and play it out of whatever your device is connected to: headphones, a line out, an audio interface or Bluetooth.
+- Set the level in dBFS RMS, with presets at −40, −30, −20, −18, −12 and −6. The page shows where the peaks will land and warns you before the signal clips. The music track is loudness-matched, so it plays at the same level as the noise.
+- Send the signal to the left channel, the right channel or both, and flip the right channel's polarity to check that a pair of speakers is wired in phase. Live meters show what's going out.
+- Install it to your home screen and it works offline, so it's there when you're at a venue with no signal.
 
-## Adding the music track
+Works in any current browser on iOS, Android, Windows, macOS and Linux.
 
-Name your file `music.mp3` and put it in the repo root next to `index.html`. The app fetches it when the Music mode is selected and loudness-matches it to the chosen level. Visitors can also pick their own file from their device.
+## Check it yourself: nothing is uploaded
 
-Cloudflare Pages has a 25 MB per-file limit, so keep the MP3 under that (a 2–3 minute 256 kbps MP3 is ~5 MB).
+This repository is exactly what https://pinknoisetest.com/ serves. There is no server-side code: every file here is sent to your browser as-is, and every test signal is generated on your own device.
 
-## PWA / offline
+- **The browser enforces it.** [`_headers`](_headers) gives every page a Content-Security-Policy with `connect-src 'self'` and `form-action 'none'`. That means the browser itself blocks any network request to anywhere except pinknoisetest.com. You can see the same header in your browser's developer tools (Network tab → the page request → Response headers).
+- **The code is readable.** [`app.js`](app.js) is the whole app, published unminified. Noise and tones are generated with the browser's Web Audio API. If you load your own music file, it's decoded in the browser and never leaves your device.
+- **No third-party scripts.** There are no trackers, analytics or external libraries. [`sw.js`](sw.js) is the service worker that keeps a copy of the page on your device so it works offline.
 
-The app installs to the home screen (Android/desktop Chrome show an **Install app** button; iOS shows Share → Add to Home Screen instructions). The service worker caches the page and icons, and caches `music.mp3` the first time it's played — or straight away when running as an installed app — so all modes work offline.
+## Support
 
-If you replace `music.mp3` with a different track, bump `VERSION` in `sw.js` so installed copies pick up the new file.
+If Pink Noise Test saves you time, you can buy me a coffee:
 
-## Deploy on Cloudflare Pages
+[![Buy me a coffee](https://img.buymeacoffee.com/button-api/?text=Buy%20me%20a%20coffee&emoji=%E2%98%95&slug=sophtwhere&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff)](https://www.buymeacoffee.com/sophtwhere)
 
-1. Push this folder to a GitHub repo.
-2. Cloudflare dashboard → Workers & Pages → Create → Pages → Connect to Git → pick the repo.
-3. Build settings: Framework preset **None**, build command **empty**, output directory **/** .
-4. Deploy, then Custom domains → add `pinknoisetest.com` (and `www`).
+---
 
-Every push to `main` redeploys automatically.
-
-## Local testing
-
-Audio needs a real HTTP origin for the `music.mp3` fetch:
-
-```
-python3 -m http.server 8000
-```
-
-Then open http://localhost:8000.
+This repository contains only the published web app. Maintenance notes and tools are kept separately.

@@ -1,10 +1,10 @@
 // Pink Noise Test service worker
 // - App shell: network-first, so deploys show up on the next visit; falls back to cache offline.
 // - music.mp3 and icons: cache-first (large / rarely change). Bump VERSION if you replace music.mp3.
-const VERSION = 'v1';
+const VERSION = 'v2';
 const SHELL = `shell-${VERSION}`;
 const MEDIA = `media-${VERSION}`;
-const SHELL_FILES = ['/', '/manifest.webmanifest', '/icons/icon.svg', '/icons/icon-192.png', '/icons/icon-512.png', '/icons/apple-touch-icon.png'];
+const SHELL_FILES = ['/', '/manifest.webmanifest', '/icons/icon.svg', '/icons/icon-192.png', '/icons/icon-512.png', '/icons/apple-touch-icon.png', '/icons/bmc-qr.svg', '/app.css', '/app.js'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(SHELL).then(c => c.addAll(SHELL_FILES)).then(() => self.skipWaiting()));
