@@ -19,6 +19,10 @@ This repository is exactly what https://pinknoisetest.com/ serves. There is no s
 - **The code is readable.** [`app.js`](app.js) is the whole app, published unminified. Noise and tones are generated with the browser's Web Audio API. If you load your own music file, it's decoded in the browser and never leaves your device.
 - **No third-party scripts.** There are no trackers, analytics or external libraries. [`sw.js`](sw.js) is the service worker that keeps a copy of the page on your device so it works offline.
 
+## Licence
+
+The code is MIT licensed (see [`LICENSE`](LICENSE)). The music test track, [`music.mp3`](music.mp3), is not covered by that licence: it's © Jonathan Annett, all rights reserved, and is included only so the app can play it.
+
 ## Support
 
 If Pink Noise Test saves you time, you can buy me a coffee:
